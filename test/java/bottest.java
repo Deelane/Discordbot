@@ -1,4 +1,5 @@
 import Utils.BotConfiguration;
+import Utils.ClientConfiguration;
 import discord4j.core.DiscordClient;
 import discord4j.core.DiscordClientBuilder;
 import discord4j.core.event.domain.lifecycle.ReadyEvent;
@@ -16,7 +17,8 @@ public class bottest
     public static void main(String[] args) throws Exception
     {
         final BotConfiguration botConfig = BotConfiguration.getInstance();
-        final DiscordClient client = new DiscordClientBuilder(botConfig.getToken()).build();
+        final ClientConfiguration clientConfig = new ClientConfiguration(botConfig);
+        final DiscordClient client = clientConfig.getClient();
 
         client.getEventDispatcher().on(ReadyEvent.class)
                 .subscribe(ready -> System.out.println("Logged in as " + ready.getSelf().getUsername()));
