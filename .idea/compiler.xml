@@ -6,8 +6,7 @@
         <sourceOutputDir name="target/generated-sources/annotations" />
         <sourceTestOutputDir name="target/generated-test-sources/test-annotations" />
         <outputRelativeToContentRoot value="true" />
-        <module name="DiscordBot" />
-        <module name="Discordbot" />
+        <module name="sample-maven" />
       </profile>
     </annotationProcessing>
   </component>
