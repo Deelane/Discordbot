@@ -1,16 +1,32 @@
 package events;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
 public class MessageParser
 {
     private String msg;
-    private List<String> Parsedmsg;
+    private List<String> Parsedmsg = new ArrayList<>();
     public MessageParser(String msg)
     {
         this.msg = msg;
-        this.Parsedmsg = Arrays.asList(msg.split(","));
+        List<String> command = Arrays.asList(msg.split(" ",2 )); //splits command from rest of message
+        if (command.size() > 1)
+        {
+            String arguments = command.get(1); //stores rest of message into a new string
+            List<String> argumentsList = Arrays.asList(arguments.split(","));//splits arguments by commas and stores them into parsedmsg
+            int argumentsListSize = argumentsList.size();//so that we don't go out of bounds
+            Parsedmsg.add(0, command.get(0).toLowerCase());//inserts command into 0 index of parsedmsg
+            for (int i = 0; i < argumentsListSize; i++)
+            {
+                Parsedmsg.add(argumentsList.get(i).toLowerCase().trim());
+            }
+        }
+        else
+        {
+            Parsedmsg.add(msg);
+        }
     }
     public String getMessage()
     {

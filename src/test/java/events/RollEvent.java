@@ -23,6 +23,6 @@ public class RollEvent implements MessageEvent
     {
         Random random = new Random();
         int randomInt = random.nextInt((max-min)+1) + min;//converts roll to int, generates random integer in range
-        return "You rolled " + randomInt + ".";
+        return "You rolled " + randomInt + " out of " + max + ".";
     }
 }
