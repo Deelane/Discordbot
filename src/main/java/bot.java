@@ -1,12 +1,17 @@
 import Utils.BotConfiguration;
+import Utils.ClientConfiguration;
 import discord4j.core.DiscordClient;
 import discord4j.core.DiscordClientBuilder;
 import discord4j.core.event.domain.lifecycle.ReadyEvent;
 import discord4j.core.event.domain.message.MessageCreateEvent;
+import discord4j.core.object.entity.Channel;
 import discord4j.core.object.entity.Message;
+import discord4j.core.object.entity.MessageChannel;
+import discord4j.core.object.entity.TextChannel;
 import events.MessageRouter;
 
 import events.MessageParser;
+import features.RedditImagePoster;
 
 import java.util.NoSuchElementException;
 import java.util.Optional;
@@ -16,7 +21,9 @@ public class bot
     public static void main(String[] args) throws Exception
     {
         final BotConfiguration botConfig = BotConfiguration.getInstance();
-        final DiscordClient client = new DiscordClientBuilder(botConfig.getToken()).build();
+        final ClientConfiguration clientConfig = new ClientConfiguration(botConfig);
+        final DiscordClient client = clientConfig.getClient();
+        RedditImagePoster poster = new RedditImagePoster(client);
 
         client.getEventDispatcher().on(ReadyEvent.class)
                 .subscribe(ready -> System.out.println("Logged in as " + ready.getSelf().getUsername()));
@@ -39,7 +46,7 @@ public class bot
         MessageParser m = new MessageParser(msg.getContent().orElse(""));
         if (m.isCommand(m.getParsedmsg()))
         {
-             result = MessageRouter.RouteMessage(m.getParsedmsg());
+            result = MessageRouter.RouteMessage(m.getParsedmsg());
         }
         return result;
     }

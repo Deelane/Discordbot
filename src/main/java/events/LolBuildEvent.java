@@ -40,7 +40,7 @@ public class LolBuildEvent implements MessageEvent {
                     link += "5v5/champion/" + champ.replaceAll("[^A-Za-z]+", "") + "/" + role.replaceAll("[^A-Za-z]+", "");
                 }
                 else
-                {
+                    {
                     link = "Invalid mode or role. Proper modes are:\n" +
                             "`5v5\n" +
                             "3v3\n" +
@@ -56,7 +56,7 @@ public class LolBuildEvent implements MessageEvent {
                             "jungle\n" +
                             "adc\n" +
                             "support\n`";
-                }
+                    }
             }
             else
             {
@@ -73,28 +73,20 @@ public class LolBuildEvent implements MessageEvent {
         return link;
     }
 
-    private boolean isValid(String input, String file)
-    {
-        try
-        {
+    private boolean isValid(String input, String file) {
+        try {
             String path = getClass().getClassLoader().getResource(file).getPath();
             File LolChamps = new File(path);
             BufferedReader br = new BufferedReader(new FileReader(LolChamps));
             String str;
-            while ((str = br.readLine()) != null)
-            {
-                if (str.equalsIgnoreCase(input))
-                {
+            while ((str = br.readLine()) != null) {
+                if (str.equalsIgnoreCase(input)) {
                     return true;
                 }
             }
-        }
-        catch (FileNotFoundException ex)
-        {
+        } catch (FileNotFoundException ex) {
             ex.printStackTrace();
-        }
-        catch (IOException e)
-        {
+        } catch (IOException e) {
             e.printStackTrace();
         }
         return false;
