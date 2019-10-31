@@ -11,14 +11,8 @@ import net.dean.jraw.models.SubredditSort;
 import net.dean.jraw.models.TimePeriod;
 import net.dean.jraw.pagination.DefaultPaginator;
 
-import java.io.BufferedReader;
-import java.io.File;
-import java.io.FileReader;
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Objects;
-import java.util.TimerTask;
+import java.io.*;
+import java.util.*;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
@@ -30,6 +24,7 @@ public class RedditImagePoster
 
     public RedditImagePoster(DiscordClient client)
     {
+        TextChannel channel = loadChannel(client);
         String path = Objects.requireNonNull(getClass().getClassLoader().getResource("Subreddits.properties")).getPath();
         File Subreddits = new File(path);
         ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(1);
@@ -42,7 +37,7 @@ public class RedditImagePoster
                     String str;
                     while ((str = br.readLine()) != null)
                     {
-                        postImage(str, client);
+                        postImage(str, client, channel);
                     }
                 }
                 catch (IOException e)
@@ -53,7 +48,7 @@ public class RedditImagePoster
         }, 24, TimeUnit.HOURS); //24 hours
     }
 
-    private void postImage(String subreddit, DiscordClient client)
+    private void postImage(String subreddit, DiscordClient client, TextChannel channel)
     {
         //posts images to channel
         //check rising, post top X images
@@ -74,7 +69,6 @@ public class RedditImagePoster
                 postinfo.add(temp);
             }
         }
-        TextChannel channel = (TextChannel) client.getChannelById(Snowflake.of("639281196836323341")).block(); //Textchannel to post data to, constructed with channel's ID
         /*DateTimeFormatter dtf = DateTimeFormatter.ofPattern("MMMM dd, yyyy");
         LocalDateTime now = LocalDateTime.now();
         channel.createMessage("Hello Foopers, please enjoy your daily foop for " + dtf.format(now)).block(); //creates message in channel*/
@@ -90,5 +84,23 @@ public class RedditImagePoster
             e.printStackTrace();
         }
     }
+    private TextChannel loadChannel(DiscordClient client)
+    {
+        TextChannel channel = null;
+        String path = Objects.requireNonNull(getClass().getClassLoader().getResource("TextChannel.properties")).getPath();
+        try(FileInputStream fileInputStream = new FileInputStream(path))
+        {
+            Properties props = new Properties();
+            props.load(fileInputStream);
+            String channelId = props.getProperty("ChannelId");
+            channel = (TextChannel) client.getChannelById(Snowflake.of(channelId)).block(); //Textchannel to post data to, constructed with channel's ID
+        }
+        catch (IOException e)
+        {
+            e.printStackTrace();
+        }
+        return channel;
+    }
+
 
 }
