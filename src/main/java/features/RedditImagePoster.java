@@ -27,13 +27,13 @@ public class RedditImagePoster
         TextChannel channel = loadChannel(client);
         List<String> sublist = getSubList();
         List<Submission> posts = makeList(sublist);
-        int size = posts.size();
+        LinkedHashSet<Submission> temp = new LinkedHashSet<>(posts); //transform into hashset
+        posts = new ArrayList<>(temp); //transform back into list to remove duplicates
+        Collections.shuffle(posts);
         ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(1);
-        for (int index=0; index<size; index++)
-        {
-            scheduler.schedule(new Helper(client, posts, channel, index), 10, TimeUnit.SECONDS); //creates a new instance of helper every 10 minutes, posts the Submission stored at "index" in posts
-        }
+        scheduler.schedule(new Helper(client, posts, channel, scheduler), 5, TimeUnit.MINUTES); //creates a new instance of helper every 10 minutes, posts the Submission stored at "index" in posts
     }
+
 
 
     private List<String> getSubList()
@@ -62,7 +62,7 @@ public class RedditImagePoster
         try
         {
             {
-                channel.createMessage("**Subreddit: **" + post.get(0) + "\n" + "**Author: **" + post.get(1) + "\n" + "**Title: **" + post.get(2) + "\n" + "**Permalink: **" + post.get(3) + "\n" + post.get(4)).block(); //creates message in channel
+                channel.createMessage("**Subreddit: **" + "<https://reddit.com/r/" + post.get(0) + ">" + "\n" + "**Author: **" + "<https://reddit.com/u/" + post.get(1) + ">" + "\n" + "**Title: **" + post.get(2) + "\n" + "**Permalink: **" + "<https://reddit.com" + post.get(3) + ">" + "\n" + "**Image: **" + post.get(4)).block(); //creates message in channel
             }
         }
         catch (NullPointerException e)
@@ -78,7 +78,7 @@ public class RedditImagePoster
         {
             DefaultPaginator<Submission> paginator = reddit.subreddit(sub) // returns a pagination of submissions of the subreddit string passed in
                     .posts()
-                    .limit(3) // 3 posts per page, doesn't count stickied posts
+                    .limit(5) // 3 posts per page, doesn't count stickied posts
                     .sorting(SubredditSort.HOT) // top posts
                     .timePeriod(TimePeriod.DAY) // of all time
                     .build();
@@ -132,20 +132,31 @@ public class RedditImagePoster
         DiscordClient client;
         List<Submission> posts;
         TextChannel channel;
-        int index;
-        private Helper (DiscordClient client, List<Submission> posts, TextChannel channel, int index)
+        int size;
+        ScheduledExecutorService scheduler;
+        private Helper (DiscordClient client, List<Submission> posts, TextChannel channel, ScheduledExecutorService scheduler)
         {
-            this.index = index;
             this.client = client;
             this.posts = posts;
             this.channel = channel;
+            this.size = posts.size();
+            this.scheduler = scheduler;
         }
         public void run()
         {
-            List<String> post = makePost(posts, index);
-            if (post!=null)
+            if (size==0)
             {
-                postImage(post, client, channel);
+                return;
+            }
+            else
+            {
+                List<String> post = makePost(posts, 0);
+                if (post != null)
+                {
+                    postImage(post, client, channel);
+                }
+                posts.remove(0);
+                scheduler.schedule(new Helper(client, posts, channel, scheduler), 5, TimeUnit.MINUTES);
             }
         }
     }
