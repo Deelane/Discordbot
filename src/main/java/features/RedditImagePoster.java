@@ -25,58 +25,44 @@ public class RedditImagePoster
     public RedditImagePoster(DiscordClient client)
     {
         TextChannel channel = loadChannel(client);
-        String path = Objects.requireNonNull(getClass().getClassLoader().getResource("Subreddits.properties")).getPath();
-        File Subreddits = new File(path);
+        List<String> sublist = getSubList();
+        List<Submission> posts = makeList(sublist);
+        int size = posts.size();
         ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(1);
-        scheduler.schedule(new TimerTask() { //runs postImage on a timer, setting to 24 hours for now.
-            public void run()
-            {
-                try
-                {
-                    BufferedReader br = new BufferedReader(new FileReader(Subreddits));
-                    String str;
-                    while ((str = br.readLine()) != null)
-                    {
-                        postImage(str, client, channel);
-                    }
-                }
-                catch (IOException e)
-                {
-                    e.printStackTrace();
-                }
-            }
-        }, 24, TimeUnit.HOURS); //24 hours
+        for (int index=0; index<size; index++)
+        {
+            scheduler.schedule(new Helper(client, posts, channel, index), 10, TimeUnit.SECONDS); //creates a new instance of helper every 10 minutes, posts the Submission stored at "index" in posts
+        }
     }
 
-    private void postImage(String subreddit, DiscordClient client, TextChannel channel)
+
+    private List<String> getSubList()
     {
-        //posts images to channel
-        //check rising, post top X images
-        DefaultPaginator<Submission> paginator = reddit.subreddit(subreddit) // returns a pagination of submissions of the subreddit string passed in
-                .posts()
-                .limit(3) // 3 posts per page, doesn't count stickied posts
-                .sorting(SubredditSort.HOT) // top posts
-                .timePeriod(TimePeriod.DAY) // of all time
-                .build();
-        Listing<Submission> posts = paginator.next(); //creates a "listing" containing each post in the pagination
-        int size = posts.size();
-        List<String[]> postinfo = new ArrayList<>(); //list of array strings to hold desired info from posts
-        for (int i=0; i<size; i++)
+        String path = Objects.requireNonNull(getClass().getClassLoader().getResource("Subreddits.properties")).getPath();
+        File subreddits = new File(path);
+        List<String> sublist = new ArrayList<>();
+        try
         {
-            if (!(posts.get(i).isStickied())) //if posted by a mod, checking if posts is stickied should produce similar result
+            BufferedReader br = new BufferedReader(new FileReader(subreddits));
+            String str;
+            while ((str = br.readLine()) != null) //adds every subreddit in our resource to our list
             {
-                String[] temp = {subreddit, posts.get(i).getAuthor(), posts.get(i).getTitle(), posts.get(i).getPermalink(), posts.get(i).getUrl()}; //constructs an array containing the post's author, post title, and URL
-                postinfo.add(temp);
+                sublist.add(str);
             }
         }
-        /*DateTimeFormatter dtf = DateTimeFormatter.ofPattern("MMMM dd, yyyy");
-        LocalDateTime now = LocalDateTime.now();
-        channel.createMessage("Hello Foopers, please enjoy your daily foop for " + dtf.format(now)).block(); //creates message in channel*/
-        size = postinfo.size();
-        try {
-            for (int i = 0; i < size; i++)
+        catch (IOException e)
+        {
+            e.printStackTrace();
+        }
+        return sublist;
+    }
+
+    private void postImage(List<String> post, DiscordClient client, TextChannel channel)
+    {
+        try
+        {
             {
-                channel.createMessage("**Subreddit: **" + subreddit + "\n" + "**User: **" + postinfo.get(i)[1] + "\n" + "**Title: **" + postinfo.get(i)[2] + "\n" + "Permalink: " + postinfo.get(i)[3] + "\n" + postinfo.get(i)[4]).block(); //creates message in channel
+                channel.createMessage("**Subreddit: **" + post.get(0) + "\n" + "**Author: **" + post.get(1) + "\n" + "**Title: **" + post.get(2) + "\n" + "**Permalink: **" + post.get(3) + "\n" + post.get(4)).block(); //creates message in channel
             }
         }
         catch (NullPointerException e)
@@ -84,6 +70,46 @@ public class RedditImagePoster
             e.printStackTrace();
         }
     }
+
+    private List<Submission> makeList(List<String> sublist)
+    {
+        List<Submission> posts = new ArrayList<>(); //creates a "listing" containing each post in the pagination
+        for (String sub : sublist)
+        {
+            DefaultPaginator<Submission> paginator = reddit.subreddit(sub) // returns a pagination of submissions of the subreddit string passed in
+                    .posts()
+                    .limit(3) // 3 posts per page, doesn't count stickied posts
+                    .sorting(SubredditSort.HOT) // top posts
+                    .timePeriod(TimePeriod.DAY) // of all time
+                    .build();
+            Listing<Submission> temp = paginator.next(); //creates a "listing" containing each post in the pagination
+            posts.addAll(temp);
+        }
+        return posts;
+    }
+
+    private List<String> makePost(List<Submission> posts, int postListIndex) //makes a single post containing desired info from a list of posts and an index
+    {
+        List<String> post = new ArrayList<>(); //list to hold desired info from posts
+        try
+        {
+        if (!(posts.get(postListIndex).isStickied())) //if posted by a mod, checking if posts is stickied should produce similar result
+            {
+                post.add(posts.get(postListIndex).getSubreddit());
+                post.add(posts.get(postListIndex).getAuthor());
+                post.add(posts.get(postListIndex).getTitle());
+                post.add(posts.get(postListIndex).getPermalink());
+                post.add(posts.get(postListIndex).getUrl());
+                return post;
+            }
+        }
+        catch (NullPointerException e)
+        {
+            e.printStackTrace();
+        }
+        return null;
+    }
+
     private TextChannel loadChannel(DiscordClient client)
     {
         TextChannel channel = null;
@@ -100,6 +126,28 @@ public class RedditImagePoster
             e.printStackTrace();
         }
         return channel;
+    }
+    private class Helper extends TimerTask
+    {
+        DiscordClient client;
+        List<Submission> posts;
+        TextChannel channel;
+        int index;
+        private Helper (DiscordClient client, List<Submission> posts, TextChannel channel, int index)
+        {
+            this.index = index;
+            this.client = client;
+            this.posts = posts;
+            this.channel = channel;
+        }
+        public void run()
+        {
+            List<String> post = makePost(posts, index);
+            if (post!=null)
+            {
+                postImage(post, client, channel);
+            }
+        }
     }
 
 
