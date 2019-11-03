@@ -31,7 +31,7 @@ public class RedditImagePoster
         posts = new ArrayList<>(temp); //transform back into list to remove duplicates
         Collections.shuffle(posts);
         ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(1);
-        scheduler.schedule(new Helper(client, posts, channel, scheduler), 5, TimeUnit.MINUTES); //creates a new instance of helper every 10 minutes, posts the Submission stored at "index" in posts
+        scheduler.schedule(new Helper(client, posts, channel, scheduler), 5, TimeUnit.MINUTES); //creates a new instance of helper every 5 minutes, posts the Submission stored at "index" in posts
     }
 
 
