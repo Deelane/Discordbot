@@ -25,4 +25,4 @@ Commands:
  
  Features:
  
- RedditImagePoster: (Current Settings) Links the top 3 posts to every subreddit listed in Subreddits.properties every 24 hours. 
+ RedditImagePoster: Creates a list of the top 5 posts from every subreddit in properties file. Shuffles the list and posts 1 post every 5 minutes to discord channel.
